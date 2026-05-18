@@ -6,7 +6,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -37,79 +38,84 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-teal: #009AA5;
+  --color-teal-light: #e6f7f9;
+  --color-sky: #0ea5e9;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ─── Light Mode — prcuisa.com palette ─── */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #ffffff;
+  --foreground: #1F2937;
+  --card: #f9fafb;
+  --card-foreground: #1F2937;
+  --popover: #ffffff;
+  --popover-foreground: #1F2937;
+  --primary: #009AA5;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #1F2937;
+  --muted: #f3f4f6;
+  --muted-foreground: #4B5563;
+  --accent: #e6f7f9;
+  --accent-foreground: #009AA5;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #009AA5;
+  --chart-1: #009AA5;
+  --chart-2: #0ea5e9;
+  --chart-3: #06b6d4;
+  --chart-4: #14b8a6;
+  --chart-5: #0891b2;
+  --sidebar: #f9fafb;
+  --sidebar-foreground: #1F2937;
+  --sidebar-primary: #009AA5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6f7f9;
+  --sidebar-accent-foreground: #009AA5;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #009AA5;
 }
 
+/* ─── Dark Mode — prcuisa.com palette ─── */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #111827;
+  --foreground: #f3f4f6;
+  --card: #1F2937;
+  --card-foreground: #f3f4f6;
+  --popover: #1F2937;
+  --popover-foreground: #f3f4f6;
+  --primary: #009AA5;
+  --primary-foreground: #ffffff;
+  --secondary: #1F2937;
+  --secondary-foreground: #f3f4f6;
+  --muted: #1F2937;
+  --muted-foreground: #9CA3AF;
+  --accent: rgba(0, 154, 165, 0.15);
+  --accent-foreground: #009AA5;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #009AA5;
+  --chart-1: #009AA5;
+  --chart-2: #0ea5e9;
+  --chart-3: #06b6d4;
+  --chart-4: #14b8a6;
+  --chart-5: #0891b2;
+  --sidebar: #1F2937;
+  --sidebar-foreground: #f3f4f6;
+  --sidebar-primary: #009AA5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(0, 154, 165, 0.15);
+  --sidebar-accent-foreground: #009AA5;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #009AA5;
 }
 
 @layer base {
@@ -119,4 +125,251 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ── Custom Scrollbar (prcuisa.com style) ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #009AA5;
+  border-radius: 999px;
+  opacity: 0.6;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #009AA5;
+  opacity: 1;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #009AA5 transparent;
+}
+
+/* ── Smooth Dark Mode Transitions ── */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Chat Background — clean solid (no images) ── */
+.chat-bg {
+  background-color: #f9fafb;
+}
+
+.dark .chat-bg {
+  background-color: #111827;
+}
+
+/* ── Chat Bubbles — prcuisa.com colors ── */
+.tg-bubble-user {
+  background: linear-gradient(135deg, #009AA5 0%, #0ea5e9 100%);
+  border-radius: 12px 12px 4px 12px;
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.dark .tg-bubble-user {
+  background: linear-gradient(135deg, #009AA5 0%, #0ea5e9 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.tg-bubble-bot {
+  background: #ffffff;
+  border-radius: 12px 12px 12px 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.dark .tg-bubble-bot {
+  background: #1F2937;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Gradient Text (prcuisa.com hero gradient) ── */
+.gradient-text {
+  background: linear-gradient(135deg, #009AA5 0%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Typing Dots ── */
+.typing-dot {
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes typing-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── Glassmorphism Header (prcuisa.com navbar style) ── */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Markdown inside chat ── */
+.chat-markdown p {
+  margin-top: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.chat-markdown ul,
+.chat-markdown ol {
+  margin-top: 0.375rem;
+  margin-bottom: 0.375rem;
+  padding-left: 1.25rem;
+}
+
+.chat-markdown li {
+  margin-top: 0.125rem;
+  margin-bottom: 0.125rem;
+}
+
+.chat-markdown strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.chat-markdown a {
+  color: #009AA5;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.chat-markdown a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.chat-markdown code {
+  color: #009AA5;
+  background: rgba(0, 154, 165, 0.08);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.8em;
+}
+
+.dark .chat-markdown code {
+  background: rgba(0, 154, 165, 0.15);
+}
+
+.chat-markdown pre {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+.dark .chat-markdown pre {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.chat-markdown pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+.chat-markdown blockquote {
+  border-left: 2px solid rgba(0, 154, 165, 0.35);
+  padding-left: 1rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--muted-foreground);
+}
+
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4,
+.chat-markdown h5,
+.chat-markdown h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.chat-markdown hr {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-color: var(--border);
+}
+
+.chat-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.chat-markdown thead {
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-markdown th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  background: rgba(0, 154, 165, 0.05);
+}
+
+.dark .chat-markdown th {
+  background: rgba(0, 154, 165, 0.08);
+}
+
+.chat-markdown td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-markdown tr:hover {
+  background: rgba(0, 154, 165, 0.03);
 }

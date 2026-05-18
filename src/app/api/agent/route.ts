@@ -1,9 +1,15 @@
 import { NextRequest } from "next/server";
 
-// ─── Config ───────────────────────────────────────────────────
-const NVIDIA_BASE_URL = process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1";
-const NVIDIA_API_KEY = () => process.env.NVIDIA_API_KEY || "";
-const NVIDIA_MODEL = () => process.env.NVIDIA_MODEL || "openai/gpt-oss-20b";
+// ─── Vercel: allow up to 60s for LLM streaming ───────────────
+export const maxDuration = 60;
+
+// ─── Config (lazily read env vars to avoid build-time crash) ───
+const getConfig = () => ({
+  NVIDIA_BASE_URL: process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1",
+  NVIDIA_API_KEY: process.env.NVIDIA_API_KEY || "",
+  NVIDIA_MODEL: process.env.NVIDIA_MODEL || "openai/gpt-oss-20b",
+  TAVILY_API_KEY: process.env.TAVILY_API_KEY || "",
+});
 const SEARCH_API_URL = "https://api.tavily.com/search";
 
 // ─── System Prompt ───────────────────────────────────────────
@@ -86,15 +92,15 @@ async function webSearch(query: string): Promise<string> {
 }
 
 // ─── LLM Streaming via raw fetch (no SDK dependency) ────────
-async function* streamLLM(messages: Array<{ role: string; content: string }>) {
-  const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+async function* streamLLM(messages: Array<{ role: string; content: string }>, cfg: ReturnType<typeof getConfig>) {
+  const res = await fetch(`${cfg.NVIDIA_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${NVIDIA_API_KEY()}`,
+      Authorization: `Bearer ${cfg.NVIDIA_API_KEY}`,
     },
     body: JSON.stringify({
-      model: NVIDIA_MODEL(),
+      model: cfg.NVIDIA_MODEL,
       messages,
       temperature: 1,
       max_tokens: 4096,
@@ -104,7 +110,20 @@ async function* streamLLM(messages: Array<{ role: string; content: string }>) {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`LLM API error ${res.status}: ${err}`);
+    console.error("[NVIDIA API Error]", res.status, err);
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`API key tidak valid atau expired (HTTP ${res.status}). Pastikan NVIDIA_API_KEY sudah benar di environment variables.`);
+    }
+    if (res.status === 404) {
+      throw new Error(`Model "${cfg.NVIDIA_MODEL}" tidak ditemukan di NVIDIA API (HTTP 404). Coba ganti model di NVIDIA_MODEL env var.`);
+    }
+    if (res.status === 429) {
+      throw new Error(`Rate limit tercapai. Tunggu beberapa saat dan coba lagi.`);
+    }
+    if (res.status >= 500) {
+      throw new Error(`NVIDIA API server error (HTTP ${res.status}). Coba lagi nanti atau ganti model.`);
+    }
+    throw new Error(`LLM API error ${res.status}: ${err.slice(0, 200)}`);
   }
 
   const reader = res.body?.getReader();
@@ -151,8 +170,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!NVIDIA_API_KEY()) {
-      return new Response(JSON.stringify({ error: "NVIDIA_API_KEY not configured" }), {
+    const cfg = getConfig();
+
+    if (!cfg.NVIDIA_API_KEY) {
+      return new Response(JSON.stringify({ error: "NVIDIA_API_KEY not configured", hint: "Set NVIDIA_API_KEY in your .env file or Vercel environment variables." }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
@@ -201,7 +222,7 @@ export async function POST(request: NextRequest) {
             ...messages.map((m) => ({ role: m.role, content: m.content })),
           ];
 
-          for await (const text of streamLLM(conversation)) {
+          for await (const text of streamLLM(conversation, cfg)) {
             send({ type: "text", content: text });
           }
 
@@ -220,7 +241,7 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
       },
     });
   } catch (error: unknown) {
@@ -230,4 +251,50 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   }
+}
+
+// ─── Health Check (GET) ─────────────────────────────────────
+export async function GET() {
+  const cfg = getConfig();
+  const issues: string[] = [];
+
+  if (!cfg.NVIDIA_API_KEY) issues.push("NVIDIA_API_KEY is not set");
+  if (!cfg.NVIDIA_BASE_URL) issues.push("NVIDIA_BASE_URL is not set");
+  if (!cfg.TAVILY_API_KEY) issues.push("TAVILY_API_KEY is not set (optional, web search will be skipped)");
+
+  let modelOk = false;
+  if (cfg.NVIDIA_API_KEY && cfg.NVIDIA_BASE_URL) {
+    try {
+      const res = await fetch(`${cfg.NVIDIA_BASE_URL}/models`, {
+        headers: { Authorization: `Bearer ${cfg.NVIDIA_API_KEY}` },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const models = data.data?.map((m: { id: string }) => m.id) || [];
+        modelOk = models.includes(cfg.NVIDIA_MODEL);
+        if (!modelOk) issues.push(`Model "${cfg.NVIDIA_MODEL}" not found in NVIDIA API. Available models: ${models.filter((id: string) => id.includes("instruct") || id.includes("chat") || id.includes("gpt") || id.includes("deepseek") || id.includes("qwen") || id.includes("nemotron") || id.includes("mistral")).slice(0, 10).join(", ")}...`);
+      } else {
+        issues.push(`NVIDIA API returned HTTP ${res.status}`);
+      }
+    } catch (e) {
+      issues.push(`Cannot reach NVIDIA API: ${(e as Error).message}`);
+    }
+  }
+
+  return new Response(
+    JSON.stringify({
+      status: issues.length === 0 ? "ok" : "issues_found",
+      config: {
+        base_url: cfg.NVIDIA_BASE_URL ? "***configured***" : "NOT SET",
+        api_key: cfg.NVIDIA_API_KEY ? `***${cfg.NVIDIA_API_KEY.slice(-6)}...` : "NOT SET",
+        model: cfg.NVIDIA_MODEL,
+        tavily: cfg.TAVILY_API_KEY ? `***${cfg.TAVILY_API_KEY.slice(-4)}...` : "NOT SET (optional)",
+      },
+      model_available: modelOk,
+      issues,
+      timestamp: new Date().toISOString(),
+    }),
+    { headers: { "Content-Type": "application/json" } }
+  );
 }
