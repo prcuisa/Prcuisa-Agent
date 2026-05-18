@@ -100,10 +100,8 @@ export function ChatMessage({ message, logoSrc }: ChatMessageProps) {
       {!isUser && (
         <div className="flex gap-2 max-w-[85%] md:max-w-[75%]">
           {/* Avatar */}
-          <div className="shrink-0 self-end mb-5">
-            <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-[#009AA5]/20">
-              <Image src={logoSrc} alt="Prcuisa Labs" width={32} height={32} className="object-cover" />
-            </div>
+          <div className="w-8 h-8 shrink-0 self-end mb-5">
+            <Image src={logoSrc} alt="Prcuisa Labs" width={32} height={32} />
           </div>
 
           {/* Bubble area */}

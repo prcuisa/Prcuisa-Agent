@@ -9,6 +9,7 @@ import {
   Zap,
   Headphones,
   Beaker,
+  Languages,
 } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
@@ -29,32 +30,20 @@ function generateId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const SUGGESTIONS = [
-  {
-    icon: Beaker,
-    label: "Our Services",
-    description: "Explore all available services",
-    prompt: "What services does Prcuisa Labs offer?",
-  },
-  {
-    icon: Zap,
-    label: "AI Solutions",
-    description: "AI-powered solutions for your business",
-    prompt: "How can Prcuisa Labs help my business with AI?",
-  },
-  {
-    icon: Headphones,
-    label: "Free Consultation",
-    description: "Discuss digital solutions at no cost",
-    prompt: "I'd like a free consultation about digital solutions",
-  },
-  {
-    icon: Globe,
-    label: "Search Online",
-    description: "Find the latest news & information",
-    prompt: "Latest news about AI development in Indonesia",
-  },
-];
+const SUGGESTIONS: Record<"en" | "id", Array<{ icon: typeof Beaker; label: string; description: string; prompt: string }>> = {
+  en: [
+    { icon: Beaker, label: "Our Services", description: "Explore all available services", prompt: "What services does Prcuisa Labs offer?" },
+    { icon: Zap, label: "AI Solutions", description: "AI-powered solutions for your business", prompt: "How can Prcuisa Labs help my business with AI?" },
+    { icon: Headphones, label: "Free Consultation", description: "Discuss digital solutions at no cost", prompt: "I'd like a free consultation about digital solutions" },
+    { icon: Globe, label: "Search Online", description: "Find the latest news & information", prompt: "Latest news about AI development in Indonesia" },
+  ],
+  id: [
+    { icon: Beaker, label: "Layanan Kami", description: "Lihat semua layanan yang tersedia", prompt: "Apa saja layanan Prcuisa Labs?" },
+    { icon: Zap, label: "Solusi AI", description: "Bantuan AI untuk bisnis kamu", prompt: "Bagaimana Prcuisa Labs bisa bantu bisnis saya dengan AI?" },
+    { icon: Headphones, label: "Konsultasi Gratis", description: "Diskusi solusi digital secara gratis", prompt: "Saya mau konsultasi gratis tentang solusi digital" },
+    { icon: Globe, label: "Cari Info Online", description: "Cari berita & info terbaru", prompt: "Berita terbaru tentang perkembangan AI di Indonesia" },
+  ],
+};
 
 export default function Home() {
   const { theme, resolvedTheme } = useTheme();
@@ -64,6 +53,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusText, setStatusText] = useState("");
+  const [lang, setLang] = useState<"en" | "id">("en");
   const abortControllerRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -128,7 +118,7 @@ export default function Home() {
       const response = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, lang }),
         signal: abortController.signal,
       });
 
@@ -272,7 +262,7 @@ export default function Home() {
         <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center gap-3">
           {/* Left: Logo + Name + Status */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="relative w-9 h-9 rounded-full flex items-center justify-center ring-2 ring-[#009AA5]/30 overflow-hidden shrink-0">
+            <div className="relative w-9 h-9 shrink-0">
               <Image
                 src={logoSrc}
                 alt="Prcuisa Labs"
@@ -298,7 +288,7 @@ export default function Home() {
                   {isLoading && statusText
                     ? statusText
                     : isLoading
-                      ? "Processing..."
+                      ? lang === "id" ? "Memproses..." : "Processing..."
                       : "Online"}
                 </span>
               </div>
@@ -311,15 +301,15 @@ export default function Home() {
       </header>
 
       {/* ── Chat Area ── */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 min-h-0 overflow-hidden">
         {!hasMessages ? (
           /* ── Welcome Screen ── */
-          <div className="flex flex-col items-center justify-center h-full px-6 py-8 overflow-y-auto overscroll-contain scroll-mobile my-auto">
+          <div className="flex flex-col items-center justify-start h-full px-6 pt-8 pb-8 overflow-y-auto overscroll-contain scroll-mobile">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="text-center mb-10"
+              className="text-center mb-10 mt-auto md:mt-auto"
             >
               <div className="w-20 h-20 mx-auto mb-5 relative">
                 <div
@@ -329,7 +319,7 @@ export default function Home() {
                       "linear-gradient(135deg, #009AA5 0%, #0ea5e9 100%)",
                   }}
                 />
-                <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-[#009AA5]/20">
+                <div className="relative w-20 h-20">
                   <Image
                     src={logoSrc}
                     alt="Prcuisa Labs"
@@ -346,9 +336,43 @@ export default function Home() {
                 AI · Automation · Smart Systems
               </p>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed mt-3">
-                Ask me anything — I'll search the web for the latest
-                information and give you the answer.
+                {lang === "id"
+                  ? "Tanya apa saja — aku akan cari info terbaru dari internet dan kasih jawaban buat kamu."
+                  : "Ask me anything — I'll search the web for the latest information and give you the answer."}
               </p>
+            </motion.div>
+
+            {/* Language Selector */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.35 }}
+              className="flex items-center gap-2 mb-6"
+            >
+              <Languages className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">{lang === "id" ? "Bahasa balasan:" : "Reply language:"}</span>
+              <div className="flex items-center rounded-full border border-[#e5e7eb] dark:border-white/[0.08] overflow-hidden">
+                <button
+                  onClick={() => setLang("en")}
+                  className={`px-3 py-1 text-xs font-medium transition-all duration-200 cursor-pointer ${
+                    lang === "en"
+                      ? "bg-[#009AA5] text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => setLang("id")}
+                  className={`px-3 py-1 text-xs font-medium transition-all duration-200 cursor-pointer ${
+                    lang === "id"
+                      ? "bg-[#009AA5] text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Indonesia
+                </button>
+              </div>
             </motion.div>
 
             <motion.div
@@ -357,7 +381,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md"
             >
-              {SUGGESTIONS.map((s, i) => (
+              {SUGGESTIONS[lang].map((s, i) => (
                 <button
                   key={i}
                   onClick={() => setInput(s.prompt)}
@@ -384,7 +408,7 @@ export default function Home() {
           /* ── Message List ── */
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scroll-mobile"
+            className="h-full overflow-y-auto overflow-x-hidden overscroll-contain scroll-mobile"
           >
             <div className="chat-bg max-w-3xl mx-auto py-4 space-y-1 px-2 md:px-0">
               <AnimatePresence>
@@ -400,7 +424,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-center gap-2 px-3 md:px-3 py-0.5"
                 >
-                  <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-[#009AA5]/20 self-end mb-4">
+                  <div className="w-8 h-8 shrink-0 self-end mb-4">
                     <Image src={logoSrc} alt="Prcuisa Labs" width={32} height={32} className="object-cover" />
                   </div>
                   <div className="flex flex-col">
@@ -426,6 +450,7 @@ export default function Home() {
           onSubmit={handleSubmit}
           onStop={handleStop}
           isLoading={isLoading}
+          lang={lang}
         />
       </div>
     </div>

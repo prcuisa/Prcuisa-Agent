@@ -11,6 +11,7 @@ interface ChatInputProps {
   onStop: () => void;
   isLoading: boolean;
   disabled?: boolean;
+  lang?: "en" | "id";
 }
 
 export function ChatInput({
@@ -20,6 +21,7 @@ export function ChatInput({
   onStop,
   isLoading,
   disabled,
+  lang = "en",
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -57,7 +59,7 @@ export function ChatInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={lang === "id" ? "Ketik pesan..." : "Type a message..."}
           disabled={disabled || isLoading}
           rows={1}
           className={cn(

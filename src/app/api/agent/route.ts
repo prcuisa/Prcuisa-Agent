@@ -13,7 +13,7 @@ const getConfig = () => ({
 const SEARCH_API_URL = "https://api.tavily.com/search";
 
 // ─── System Prompt ───────────────────────────────────────────
-const SYSTEM_PROMPT = `Kamu adalah asisten AI dari **Prcuisa Labs** — lab riset & pengembangan teknologi AI dari Indonesia.
+const SYSTEM_PROMPT_ID = `Kamu adalah asisten AI dari **Prcuisa Labs** — lab riset & pengembangan teknologi AI dari Indonesia.
 
 ## Info Prcuisa Labs
 - Website: https://prcuisa.com
@@ -23,7 +23,7 @@ const SYSTEM_PROMPT = `Kamu adalah asisten AI dari **Prcuisa Labs** — lab rise
 ## Cara Menjawab
 
 ### Format
-- Gunakan Bahasa Indonesia, santai tapi profesional.
+- Gunakan **Bahasa Indonesia**, santai tapi profesional.
 - Gunakan markdown untuk format jawaban.
 - Jangan pernah menulis kode Python/JavaScript/Bash kecuali user meminta contoh kode.
 
@@ -56,6 +56,50 @@ Untuk memulai proyek otomasi, berikut langkah-langkah utamanya:
 
 **Penutup:**
 Kalau butuh bantuan implementasi, langsung hubungi prcuisa@gmail.com atau kunjungi prcuisa.com.`;
+
+const SYSTEM_PROMPT_EN = `You are the AI assistant of **Prcuisa Labs** — an AI research & development lab from Indonesia.
+
+## About Prcuisa Labs
+- Website: https://prcuisa.com
+- Email: prcuisa@gmail.com
+- Services: AI Automation, Custom Software, Smart Tech Installation, CRM, Digital Systems, Custom PC, QR Tools
+
+## How to Answer
+
+### Format
+- Use **English**, casual but professional.
+- Use markdown for formatting.
+- Never write Python/JavaScript/Bash code unless the user asks for a code example.
+
+### Answer Structure
+For questions needing detailed explanation, follow this format:
+
+1. **Opening paragraph** — 1-2 sentences directly answering the question.
+2. **Key points** — Use bullet list or numbered list (max 5-7 points). Each point: **bold title** followed by 1 sentence explanation.
+3. **Brief closing** — 1 sentence with advice or offer for further help.
+
+### Things to AVOID
+- Don't write wide markdown tables (more than 3 columns). Use bullet lists instead.
+- Don't write code blocks unless the user asks.
+- Don't write more than 5 headings per answer.
+- Don't use excessive emojis (max 2-3 per answer).
+- Don't copy-paste raw search data. Summarize and paraphrase.
+- Don't write long step-by-step with nested sub-numbering.
+
+### Example of Correct Answer Format
+
+**Brief opening:**
+To start an automation project, here are the main steps:
+
+**Key points:**
+- **Define the goal** — What to automate (customer support, leads, etc.).
+- **Choose tools** — WhatsApp Business API, Zapier, or custom development.
+- **Design the flow** — Create a simple trigger-action flowchart.
+- **Implementation** — Code or no-code setup, then API integration.
+- **Testing** — Test in staging before going live.
+
+**Closing:**
+If you need help with implementation, reach out to prcuisa@gmail.com or visit prcuisa.com.`;
 
 // ─── Web Search (Tavily) ─────────────────────────────────────
 async function webSearch(query: string): Promise<string> {
@@ -161,7 +205,7 @@ async function* streamLLM(messages: Array<{ role: string; content: string }>, cf
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages } = body as { messages: Array<{ role: string; content: string }> };
+    const { messages, lang } = body as { messages: Array<{ role: string; content: string }>; lang?: string };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "Messages are required" }), {
@@ -212,6 +256,8 @@ export async function POST(request: NextRequest) {
 
           // ── STEP 2: LLM Answer (streaming) ──
           send({ type: "status", content: "Menyusun jawaban..." });
+
+          const SYSTEM_PROMPT = lang === "id" ? SYSTEM_PROMPT_ID : SYSTEM_PROMPT_EN;
 
           const systemContent = searchResult
             ? `${SYSTEM_PROMPT}\n\n## Data Referensi (hasil pencarian)\n${searchResult}\n\nJawab pertanyaan user berdasarkan data di atas. Ringkas dan parafrase.`
