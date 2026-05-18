@@ -68,7 +68,7 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isDark = mounted && resolvedTheme === "dark";
-  const logoSrc = isDark ? "/prcuisa-logo-dark.png" : "/prcuisa-logo.png";
+  const logoSrc = isDark ? "https://prcuisa.com/logodark.png" : "https://prcuisa.com/logolight.png";
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
