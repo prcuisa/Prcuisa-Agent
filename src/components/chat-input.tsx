@@ -57,7 +57,7 @@ export function ChatInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ketik pesan..."
+          placeholder="Type a message..."
           disabled={disabled || isLoading}
           rows={1}
           className={cn(

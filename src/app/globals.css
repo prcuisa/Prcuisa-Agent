@@ -161,6 +161,11 @@ html.dark {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ── Mobile Smooth Scroll ── */
+.scroll-mobile {
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ── Chat Background — clean solid (no images) ── */
 .chat-bg {
   background-color: #f9fafb;

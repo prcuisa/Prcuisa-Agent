@@ -15,7 +15,7 @@ import { useTheme } from "next-themes";
 import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// Native scroll — mobile friendly
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type {
@@ -32,27 +32,27 @@ function generateId() {
 const SUGGESTIONS = [
   {
     icon: Beaker,
-    label: "Layanan Prcuisa Labs",
-    description: "Lihat semua layanan yang tersedia",
-    prompt: "Apa saja layanan Prcuisa Labs?",
+    label: "Our Services",
+    description: "Explore all available services",
+    prompt: "What services does Prcuisa Labs offer?",
   },
   {
     icon: Zap,
-    label: "Solusi AI",
-    description: "Bantuan AI untuk bisnis kamu",
-    prompt: "Bagaimana Prcuisa Labs bisa bantu bisnis saya dengan AI?",
+    label: "AI Solutions",
+    description: "AI-powered solutions for your business",
+    prompt: "How can Prcuisa Labs help my business with AI?",
   },
   {
     icon: Headphones,
-    label: "Konsultasi Gratis",
-    description: "Diskusi solusi digital secara gratis",
-    prompt: "Saya mau konsultasi gratis tentang solusi digital",
+    label: "Free Consultation",
+    description: "Discuss digital solutions at no cost",
+    prompt: "I'd like a free consultation about digital solutions",
   },
   {
     icon: Globe,
-    label: "Cari Info Online",
-    description: "Cari berita & info terbaru",
-    prompt: "Berita terbaru tentang perkembangan AI di Indonesia",
+    label: "Search Online",
+    description: "Find the latest news & information",
+    prompt: "Latest news about AI development in Indonesia",
   },
 ];
 
@@ -66,17 +66,15 @@ export default function Home() {
   const [statusText, setStatusText] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
 
   const isDark = mounted && resolvedTheme === "dark";
   const logoSrc = isDark ? "/prcuisa-logo-dark.png" : "/prcuisa-logo.png";
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
-      viewportRef.current?.scrollTo({
-        top: viewportRef.current.scrollHeight,
-        behavior: "smooth",
-      });
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     });
   }, []);
 
@@ -99,7 +97,7 @@ export default function Home() {
     const userContent = input.trim();
     setInput("");
     setIsLoading(true);
-    setStatusText("Mencari informasi...");
+    setStatusText("Searching for information...");
 
     const userMsg: DisplayMessage = {
       id: generateId(),
@@ -300,7 +298,7 @@ export default function Home() {
                   {isLoading && statusText
                     ? statusText
                     : isLoading
-                      ? "Memproses..."
+                      ? "Processing..."
                       : "Online"}
                 </span>
               </div>
@@ -316,7 +314,7 @@ export default function Home() {
       <main className="flex-1 overflow-hidden">
         {!hasMessages ? (
           /* ── Welcome Screen ── */
-          <div className="flex flex-col items-center justify-center h-full px-6 py-8">
+          <div className="flex flex-col items-center justify-center h-full px-6 py-8 overflow-y-auto overscroll-contain scroll-mobile my-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -348,8 +346,8 @@ export default function Home() {
                 AI · Automation · Smart Systems
               </p>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed mt-3">
-                Tanya apa saja — aku akan cari info terbaru dari internet dan
-                kasih jawaban buat kamu.
+                Ask me anything — I'll search the web for the latest
+                information and give you the answer.
               </p>
             </motion.div>
 
@@ -384,11 +382,11 @@ export default function Home() {
           </div>
         ) : (
           /* ── Message List ── */
-          <ScrollArea className="h-full" ref={scrollRef}>
-            <div
-              ref={viewportRef}
-              className="chat-bg max-w-3xl mx-auto py-4 space-y-1 px-2 md:px-0"
-            >
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scroll-mobile"
+          >
+            <div className="chat-bg max-w-3xl mx-auto py-4 space-y-1 px-2 md:px-0">
               <AnimatePresence>
                 {messages.map((msg) => (
                   <ChatMessage key={msg.id} message={msg} logoSrc={logoSrc} />
@@ -416,7 +414,7 @@ export default function Home() {
                 </motion.div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </main>
 
