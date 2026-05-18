@@ -1,19 +1,9 @@
 import { NextRequest } from "next/server";
-import OpenAI from "openai";
 
 // ─── Config ───────────────────────────────────────────────────
-// Lazy init — SDK only instantiated at request time, not during build
-let _openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({
-      baseURL: process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1",
-      apiKey: process.env.NVIDIA_API_KEY,
-    });
-  }
-  return _openai;
-}
-
+const NVIDIA_BASE_URL = process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1";
+const NVIDIA_API_KEY = () => process.env.NVIDIA_API_KEY || "";
+const NVIDIA_MODEL = () => process.env.NVIDIA_MODEL || "openai/gpt-oss-20b";
 const SEARCH_API_URL = "https://api.tavily.com/search";
 
 // ─── System Prompt ───────────────────────────────────────────
@@ -62,15 +52,9 @@ Untuk memulai proyek otomasi, berikut langkah-langkah utamanya:
 Kalau butuh bantuan implementasi, langsung hubungi prcuisa@gmail.com atau kunjungi prcuisa.com.`;
 
 // ─── Web Search (Tavily) ─────────────────────────────────────
-interface SearchResult {
-  title: string;
-  url: string;
-  content: string;
-}
-
-async function webSearch(query: string): Promise<SearchResult[]> {
+async function webSearch(query: string): Promise<string> {
   const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) return [];
+  if (!apiKey) return "";
 
   try {
     const res = await fetch(SEARCH_API_URL, {
@@ -84,16 +68,73 @@ async function webSearch(query: string): Promise<SearchResult[]> {
       }),
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) return "";
 
     const data = await res.json();
-    return (data.results || []).map((r: { title: string; url: string; content: string }) => ({
-      title: r.title,
-      url: r.url,
-      content: r.content,
-    }));
+    const results = data.results || [];
+    if (results.length === 0) return "";
+
+    return results
+      .map(
+        (r: { title: string; url: string; content: string }, i: number) =>
+          `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.content.slice(0, 200)}`
+      )
+      .join("\n\n");
   } catch {
-    return [];
+    return "";
+  }
+}
+
+// ─── LLM Streaming via raw fetch (no SDK dependency) ────────
+async function* streamLLM(messages: Array<{ role: string; content: string }>) {
+  const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${NVIDIA_API_KEY()}`,
+    },
+    body: JSON.stringify({
+      model: NVIDIA_MODEL(),
+      messages,
+      temperature: 1,
+      max_tokens: 4096,
+      stream: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`LLM API error ${res.status}: ${err}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("No response body from LLM");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith("data: ")) continue;
+      const json = trimmed.slice(6);
+      if (json === "[DONE]") return;
+
+      try {
+        const parsed = JSON.parse(json);
+        const content = parsed.choices?.[0]?.delta?.content || "";
+        if (content) yield content;
+      } catch {
+        // skip malformed chunks
+      }
+    }
   }
 }
 
@@ -106,6 +147,13 @@ export async function POST(request: NextRequest) {
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "Messages are required" }), {
         status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (!NVIDIA_API_KEY()) {
+      return new Response(JSON.stringify({ error: "NVIDIA_API_KEY not configured" }), {
+        status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -124,64 +172,37 @@ export async function POST(request: NextRequest) {
           // ── STEP 1: Web Search ──
           send({ type: "status", content: "Mencari informasi..." });
 
-          let searchContext = "";
-          const results = await webSearch(lastMessage);
+          const searchResult = await webSearch(lastMessage);
 
-          if (results.length > 0) {
+          if (searchResult) {
             send({
               type: "tool_call",
               id: "search_1",
               tool: "web_search",
               args: { query: lastMessage },
             });
-
-            const formatted = results
-              .map(
-                (r, i) =>
-                  `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.content.slice(0, 200)}`
-              )
-              .join("\n\n");
-
-            searchContext = `Hasil pencarian:\n\n${formatted}`;
             send({
               type: "tool_result",
               id: "search_1",
               tool: "web_search",
-              content: `Ditemukan ${results.length} hasil`,
+              content: searchResult.split("\n\n").length + " hasil ditemukan",
             });
           }
 
           // ── STEP 2: LLM Answer (streaming) ──
           send({ type: "status", content: "Menyusun jawaban..." });
 
-          const systemContent = searchContext
-            ? `${SYSTEM_PROMPT}\n\n## Data Referensi (hasil pencarian)\n${searchContext}\n\nJawab pertanyaan user berdasarkan data di atas. Jika data tidak relevan, jawab dari pengetahuan kamu sendiri tentang Prcuisa Labs.`
+          const systemContent = searchResult
+            ? `${SYSTEM_PROMPT}\n\n## Data Referensi (hasil pencarian)\n${searchResult}\n\nJawab pertanyaan user berdasarkan data di atas. Ringkas dan parafrase.`
             : SYSTEM_PROMPT;
 
           const conversation = [
-            { role: "system" as const, content: systemContent },
-            ...messages.map((m) => ({
-              role: m.role as "user" | "assistant",
-              content: m.content,
-            })),
+            { role: "system", content: systemContent },
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
           ];
 
-          const llmStream = await getOpenAI().chat.completions.create({
-            model: process.env.NVIDIA_MODEL || "openai/gpt-oss-20b",
-            messages: conversation,
-            temperature: 1,
-            max_tokens: 4096,
-            stream: true,
-          });
-
-          for await (const chunk of llmStream) {
-            // Reasoning tokens — silently consume
-            const reasoning = (chunk.choices[0]?.delta as { reasoning_content?: string } | undefined)?.reasoning_content;
-            if (reasoning) { /* consume */ }
-            const content = chunk.choices[0]?.delta?.content || "";
-            if (content) {
-              send({ type: "text", content });
-            }
+          for await (const text of streamLLM(conversation)) {
+            send({ type: "text", content: text });
           }
 
           send({ type: "done" });
